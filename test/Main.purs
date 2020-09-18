@@ -2,12 +2,12 @@ module Test.Main where
 
 import Prelude
 
-import Effect.Aff.Cache (newCache, runCached)
 import Control.Monad.Error.Class (throwError)
 import Effect (Effect)
 import Effect.Aff (Aff, apathize, forkAff, joinFiber, launchAff_)
 import Effect.Aff.AVar as AVar
-import Effect.Class.Console (log)
+import Effect.Aff.Cache (newCache, runCached, runCached')
+import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldReturn)
@@ -16,7 +16,7 @@ import Test.Spec.Runner (runSpec)
 
 main :: Effect Unit
 main = launchAff_ $ runSpec [consoleReporter] do
-  describe "cache" cacheSpec
+  describe "AffCache" cacheSpec
 
 cacheSpec :: Spec Unit
 cacheSpec = do
@@ -29,6 +29,12 @@ cacheSpec = do
     (runCached c "foo" (pure "FOO")) `shouldReturn` "FOO"
     (runCached c "bar" (pure "BAR")) `shouldReturn` "BAR"
 
+  it "should run uncached results eagerly" do
+    latch <- AVar.empty
+    c <- newCache
+    _ <- liftEffect $ runCached' c "foo" (AVar.put unit latch)
+    AVar.take latch
+
   it "should cache successful results" do
     avar <- AVar.new "FOO"
     c <- newCache
@@ -36,7 +42,6 @@ cacheSpec = do
     (runCached c "foo" (AVar.take avar)) `shouldReturn` "FOO"
 
   it "should share results in flight" do
-    log "debugging share"
     avar <- AVar.empty
     c <- newCache
     fiber1 <- forkAff $ runCached c "foo" (AVar.take avar)
