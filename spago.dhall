@@ -1,4 +1,5 @@
 { name = "aff-cache"
+, license = "MIT"
 , dependencies =
   [ "aff"
   , "avar"
