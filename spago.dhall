@@ -1,5 +1,6 @@
 { name = "aff-cache"
 , license = "MIT"
+, repository = "https://github.com/jvliwanag/purescript-aff-cache.git"
 , dependencies =
   [ "aff"
   , "avar"
